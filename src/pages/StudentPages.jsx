@@ -51,7 +51,7 @@ export function Metrics({ stats, full = false }) {
       ["hourglass-split", "Questões pendentes", stats.pending],
       ["check-circle", "Acertos confirmados", stats.correct],
       ["x-circle", "Erros confirmados", stats.incorrect],
-      ["question-circle", "Sem gabarito", stats.unknown],
+      ["question-circle", "Sem correção", stats.unknown],
     );
   return (
     <div className="metrics-grid">
@@ -303,7 +303,7 @@ export function Performance() {
   const distribution = [
     { name: "Acertos", value: stats.correct },
     { name: "Erros", value: stats.incorrect },
-    { name: "Sem gabarito", value: stats.unknown },
+    { name: "Sem correção", value: stats.unknown },
     { name: "Pendentes", value: stats.pending },
   ].filter((d) => d.value);
   return (
@@ -346,8 +346,8 @@ export function Performance() {
       <Metrics stats={stats} full />
       <div className="info-panel">
         <Icon name="info-circle" />
-        Progresso geral: {stats.progress}%. Questões sem gabarito não contam
-        como erros e não entram na taxa de acerto.
+        Progresso geral: {stats.progress}%. Questões sem correção confirmada não
+        contam como erros e não entram na taxa de acerto.
       </div>
       <div className="charts-grid mt-4">
         <ChartCard

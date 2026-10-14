@@ -311,7 +311,7 @@ export function Home() {
               [
                 "shield-check",
                 "Resultados com transparência",
-                "Acertos são apresentados apenas quando há gabarito válido. Sem estimativas inventadas.",
+                "Cada resposta é consultada na fonte e o resultado aparece na hora. Sem estimativas inventadas.",
               ],
             ].map(([icon, title, text]) => (
               <div className="benefit" key={title}>
@@ -372,8 +372,8 @@ export function Home() {
                 "Sim. Suas respostas e posição são salvas neste navegador, separadas por email. O histórico não sincroniza entre dispositivos.",
               ],
               [
-                "Todas as questões possuem gabarito?",
-                "Nem sempre. Quando a fonte não disponibiliza um gabarito confiável, você pode praticar e registrar a resposta, mas a correção aparece como Não disponível.",
+                "Como funciona a correção das respostas?",
+                "Ao selecionar uma alternativa, consultamos a API e mostramos se a resposta está correta ou incorreta. Se a consulta falhar, a resposta fica salva sem correção e você pode tentar verificar novamente.",
               ],
               [
                 "Já paguei. Como volto a estudar?",

@@ -5,7 +5,7 @@ export const subscriptionPlans = [
     durationMonths: 1,
     pin: "V53ZTP",
     offerCode: import.meta.env.VITE_MONTHLY_OFFER_CODE || "V53ZTP",
-    price: null,
+    price: 100.00,
   },
   {
     id: "semiannual",
@@ -14,7 +14,7 @@ export const subscriptionPlans = [
     pin: "QVNMO9",
     offerCode:
       import.meta.env.VITE_SEMIANNUAL_OFFER_CODE || "QVNMO9",
-    price: null,
+    price: 500.00,
   },
   {
     id: "annual",
@@ -22,7 +22,7 @@ export const subscriptionPlans = [
     durationMonths: 12,
     pin: "G4LZK6",
     offerCode: import.meta.env.VITE_ANNUAL_OFFER_CODE || "G4LZK6",
-    price: null,
+    price: 1000.00,
   },
 ];
 export const config = {

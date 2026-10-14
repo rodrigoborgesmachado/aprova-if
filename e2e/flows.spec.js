@@ -27,7 +27,16 @@ async function prepare(page, active = true) {
   await page.route("**/GetQuestoes?**", (route) =>
     route.fulfill({ json: questions }),
   );
-  await page.route("https://subscriptions.test/**", (route) =>
+  await page.route("**/GetResposta?**", (route) =>
+    route.fulfill({
+      json: {
+        correta:
+          new URL(route.request().url()).searchParams.get("codigoResposta") ===
+          "33503",
+      },
+    }),
+  );
+  await page.route("**/subscription/status", (route) =>
     route.fulfill({
       json: {
         IsActive: active,
@@ -53,11 +62,19 @@ test("landing, planos, tema e apresentação mobile", async ({ page }) => {
   await page
     .getByRole("link", { name: "Conhecer os planos", exact: true })
     .click();
-  await expect(page.getByText("Preço a definir")).toHaveCount(3);
+  await expect(page.locator(".plan-card")).toHaveCount(3);
+  for (const price of await page.locator(".plan-price").all())
+    await expect(price).not.toBeEmpty();
+  await page.route("**/pin/*", (route) =>
+    route.fulfill({
+      contentType: "text/html",
+      body: "<p>Checkout externo de teste</p>",
+    }),
+  );
   await page
     .getByRole("button", { name: "Escolher mensal", exact: true })
     .click();
-  await expect(page.getByRole("alert")).toContainText("PIN de desenvolvimento");
+  await expect(page).toHaveURL(/\/pin\/[^/?]+$/);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   expect(
@@ -90,6 +107,9 @@ test("acesso, respostas, reload, finalização, revisão, reinício e logout", a
   await page.getByRole("button", { name: "Continuar", exact: true }).click();
   await expect(page.getByText("Enunciado da questão 1")).toBeVisible();
   await page.getByRole("radio").nth(1).check();
+  await expect(
+    page.getByText("Resposta correta.", { exact: true }),
+  ).toBeVisible();
   await expect(page.getByText("Resposta salva neste navegador.")).toBeVisible();
   await page.getByRole("button", { name: "Próxima", exact: true }).click();
   await expect(page.getByText("Enunciado da questão 2")).toBeVisible();
@@ -110,13 +130,21 @@ test("acesso, respostas, reload, finalização, revisão, reinício e logout", a
     .getByRole("dialog")
     .getByRole("button", { name: "Finalizar prova" })
     .click();
-  await expect(page.getByText(/Correção: Não disponível/)).toBeVisible();
+  await expect(
+    page.getByText("Resposta correta.", { exact: true }),
+  ).toBeVisible();
   await expect(page.getByRole("radio").first()).toBeDisabled();
   await page.getByRole("link", { name: "Ver desempenho", exact: true }).click();
   await expect(
-    page.getByText("Sem gabarito", { exact: true }).first(),
+    page.getByText("Sem correção", { exact: true }).first(),
   ).toBeVisible();
   await expect(page.locator(".performance-table tbody")).toContainText("50%");
+  await expect(
+    page.locator(".performance-table tbody tr td").nth(4),
+  ).toHaveText("1");
+  await expect(
+    page.locator(".performance-table tbody tr td").nth(5),
+  ).toHaveText("0");
   await page.goto("/provas/137");
   await expect(page.getByText("MODO REVISÃO")).toBeVisible();
   await page
@@ -136,6 +164,55 @@ test("acesso, respostas, reload, finalização, revisão, reinício e logout", a
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/entrar/);
 });
+test("correção imediata, erro, tentativa manual e nova consulta ao repetir o clique", async ({
+  page,
+}) => {
+  await prepare(page);
+  let calls = 0;
+  await page.route("**/GetResposta?**", (route) => {
+    calls++;
+    return calls === 1
+      ? route.fulfill({ status: 503, json: {} })
+      : route.fulfill({
+          json: {
+            correta:
+              new URL(route.request().url()).searchParams.get(
+                "codigoResposta",
+              ) === "33503",
+          },
+        });
+  });
+  await page.goto("/provas/137");
+  await page.getByLabel("Seu email").fill("aluno@example.com");
+  await page.getByRole("button", { name: "Continuar", exact: true }).click();
+  await page.getByRole("radio").first().check();
+  await expect(
+    page.getByText(/Não foi possível verificar esta resposta/),
+  ).toBeVisible();
+  await expect(page.getByRole("radio").first()).toBeChecked();
+  await page
+    .getByRole("button", { name: "Verificar novamente", exact: true })
+    .click();
+  await expect(
+    page.getByText("Resposta incorreta.", { exact: true }),
+  ).toBeVisible();
+  expect(calls).toBe(2);
+  await page.getByRole("radio").first().click();
+  await expect.poll(() => calls).toBe(3);
+  await expect(
+    page.getByText("Resposta incorreta.", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("radio").nth(1).check();
+  await expect(
+    page.getByText("Resposta correta.", { exact: true }),
+  ).toBeVisible();
+  expect(calls).toBe(4);
+  await page.reload();
+  await expect(
+    page.getByText("Resposta correta.", { exact: true }),
+  ).toBeVisible();
+  expect(calls).toBe(4);
+});
 test("assinatura inativa mantém conteúdo bloqueado e retorno manual permite tentar novamente", async ({
   page,
 }) => {
@@ -150,7 +227,7 @@ test("assinatura inativa mantém conteúdo bloqueado e retorno manual permite te
 });
 test("falha de integração não libera conteúdo", async ({ page }) => {
   await prepare(page);
-  await page.route("https://subscriptions.test/**", (route) =>
+  await page.route("**/subscription/status", (route) =>
     route.fulfill({ status: 503, json: {} }),
   );
   await page.goto("/entrar");

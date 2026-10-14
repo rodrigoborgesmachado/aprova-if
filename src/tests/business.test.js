@@ -1,11 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-  normalizeEmail,
-  validEmail,
-  answerKey,
-  correction,
-  attachmentUrls,
-} from "../utils/normalize";
+import { normalizeEmail, validEmail, attachmentUrls } from "../utils/normalize";
 import {
   loadProgress,
   updateExam,
@@ -36,29 +30,6 @@ describe("Identificação e gabarito", () => {
     expect(normalizeEmail(" Aluno@EMAIL.com ")).toBe("aluno@email.com");
     expect(validEmail(" aluno@email.com ")).toBe(true);
     expect(validEmail("a@b")).toBe(false);
-  });
-  it("não inventa gabarito nem seleciona primeira alternativa", () => {
-    expect(answerKey(q.alternatives)).toBeNull();
-    expect(correction(q, "a")).toBe("unknown");
-  });
-  it("rejeita gabarito ambíguo", () => {
-    expect(
-      answerKey([
-        { id: "a", correct: true },
-        { id: "b", correct: "1" },
-      ]),
-    ).toBeNull();
-  });
-  it("corrige somente quando existe indicador positivo único", () => {
-    const known = {
-      ...q,
-      alternatives: [
-        { id: "a", correct: "" },
-        { id: "b", correct: true },
-      ],
-    };
-    expect(correction(known, "b")).toBe("correct");
-    expect(correction(known, "a")).toBe("incorrect");
   });
   it("normaliza anexos reais e rejeita esquemas inseguros", () => {
     expect(

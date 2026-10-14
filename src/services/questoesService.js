@@ -47,10 +47,18 @@ export function normalizeQuestion(q) {
     alternatives: (q.respostasQuestoes || []).map((a) => ({
       id: String(a.codigo),
       html: a.textoResposta || "",
-      correct: a.certa,
       attachments: attachmentUrls(a.anexoResposta),
     })),
   };
+}
+export async function getAnswer(alternativeId, signal) {
+  const { data } = await client.get("/GetResposta", {
+    params: { codigoResposta: alternativeId },
+    signal,
+  });
+  if (typeof data?.correta !== "boolean")
+    throw new Error("A API retornou uma correção inválida.");
+  return data.correta ? "correct" : "incorrect";
 }
 export async function getQuestions(id, signal) {
   const { data } = await client.get("/GetQuestoes", {

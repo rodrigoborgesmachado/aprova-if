@@ -3,9 +3,9 @@ import { Alert, Button, Container, ProgressBar } from "react-bootstrap";
 import { Link, useParams } from "react-router-dom";
 import { useStudent } from "../context/StudentContext";
 import { useResource } from "../hooks/useResource";
+import { useAnswerVerification } from "../hooks/useAnswerVerification";
 import { getQuestions, normalizeExam } from "../services/questoesService";
 import { startExam } from "../services/storageService";
-import { answerKey, correction } from "../utils/normalize";
 import { QuestionHtml } from "../components/QuestionHtml";
 import { Confirm, Empty, Icon, ResourceState } from "../components/UI";
 export default function ExamPage() {
@@ -13,7 +13,10 @@ export default function ExamPage() {
   const resource = useResource((signal) => getQuestions(id, signal), id);
   const { progress, saveExam } = useStudent();
   const [confirmation, setConfirmation] = useState("");
-  const [savedNotice, setSavedNotice] = useState("");
+  const { checks, selectAnswer, resetChecks } = useAnswerVerification(
+    id,
+    saveExam,
+  );
   const questions = resource.data || [];
   const saved = progress.exams[id];
   useEffect(() => {
@@ -53,6 +56,7 @@ export default function ExamPage() {
   );
   const q = questions[index];
   const answer = saved.answers[q.id];
+  const check = checks[q.id];
   const completed = saved.status === "completed";
   const count = Object.keys(saved.answers).filter((id) =>
     questions.some((q) => q.id === id),
@@ -63,21 +67,6 @@ export default function ExamPage() {
       currentQuestionId: questions[i].id,
       updatedAt: new Date().toISOString(),
     }));
-  const select = (alternativeId) => {
-    const ok = saveExam(id, (e) => ({
-      ...e,
-      updatedAt: new Date().toISOString(),
-      answers: {
-        ...e.answers,
-        [q.id]: {
-          alternativeId,
-          answeredAt: new Date().toISOString(),
-          correctionStatus: correction(q, alternativeId),
-        },
-      },
-    }));
-    setSavedNotice(ok ? "Resposta salva neste navegador." : "");
-  };
   const confirm = () => {
     if (confirmation === "finish")
       saveExam(id, (e) => ({
@@ -86,7 +75,10 @@ export default function ExamPage() {
         finishedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }));
-    else saveExam(id, () => startExam(null, saved.exam, questions));
+    else {
+      resetChecks();
+      saveExam(id, () => startExam(null, saved.exam, questions));
+    }
     setConfirmation("");
   };
   return (
@@ -134,7 +126,7 @@ export default function ExamPage() {
             </legend>
             {q.alternatives.map((a, i) => (
               <label
-                className={`alternative ${answer?.alternativeId === a.id ? "selected" : ""} ${completed && answerKey(q.alternatives) === a.id ? "correct" : ""}`}
+                className={`alternative ${answer?.alternativeId === a.id ? `selected ${answer.correctionStatus}` : ""}`}
                 key={a.id}
               >
                 <input
@@ -143,7 +135,11 @@ export default function ExamPage() {
                   value={a.id}
                   checked={answer?.alternativeId === a.id}
                   disabled={completed}
-                  onChange={() => select(a.id)}
+                  onChange={() => selectAnswer(q.id, a.id)}
+                  onClick={() => {
+                    if (answer?.alternativeId === a.id)
+                      selectAnswer(q.id, a.id);
+                  }}
                 />
                 <span className="alternative-letter">
                   {String.fromCharCode(65 + i)}
@@ -158,13 +154,31 @@ export default function ExamPage() {
             </Alert>
           )}
           <div className="save-notice" role="status">
-            {savedNotice && !completed && (
+            {check?.saved && !completed && (
               <>
-                <Icon name="cloud-check" /> {savedNotice}
+                <Icon name="cloud-check" /> Resposta salva neste navegador.
               </>
             )}
           </div>
-          {completed && (
+          {check?.loading && (
+            <div className="mb-3" role="status">
+              Verificando resposta…
+            </div>
+          )}
+          {check?.error && (
+            <Alert variant="warning">
+              {check.error}
+              <Button
+                variant="outline-primary"
+                className="ms-2"
+                disabled={!answer}
+                onClick={() => selectAnswer(q.id, answer.alternativeId)}
+              >
+                Verificar novamente
+              </Button>
+            </Alert>
+          )}
+          {!check?.loading && !check?.error && (answer || completed) && (
             <Alert
               variant={
                 answer?.correctionStatus === "correct"
@@ -174,13 +188,26 @@ export default function ExamPage() {
                     : "secondary"
               }
             >
-              {!answer
-                ? "Questão não respondida."
-                : answer.correctionStatus === "correct"
-                  ? "Resposta correta."
-                  : answer.correctionStatus === "incorrect"
-                    ? "Resposta incorreta. A alternativa correta está destacada."
-                    : "Correção: Não disponível. A fonte não forneceu um gabarito válido."}
+              {!answer ? (
+                "Questão não respondida."
+              ) : answer.correctionStatus === "correct" ? (
+                "Resposta correta."
+              ) : answer.correctionStatus === "incorrect" ? (
+                "Resposta incorreta."
+              ) : (
+                <>
+                  Correção: Não disponível. A resposta ainda não foi verificada.
+                  {answer && (
+                    <Button
+                      variant="outline-primary"
+                      className="ms-2"
+                      onClick={() => selectAnswer(q.id, answer.alternativeId)}
+                    >
+                      Verificar resposta
+                    </Button>
+                  )}
+                </>
+              )}
             </Alert>
           )}
           <div className="question-navigation">
@@ -189,7 +216,6 @@ export default function ExamPage() {
               disabled={index === 0}
               onClick={() => {
                 go(index - 1);
-                setSavedNotice("");
               }}
             >
               <Icon name="arrow-left" /> Anterior
@@ -201,7 +227,6 @@ export default function ExamPage() {
               disabled={index === questions.length - 1}
               onClick={() => {
                 go(index + 1);
-                setSavedNotice("");
               }}
             >
               Próxima <Icon name="arrow-right" />
@@ -220,7 +245,6 @@ export default function ExamPage() {
                 aria-current={i === index ? "step" : undefined}
                 onClick={() => {
                   go(i);
-                  setSavedNotice("");
                 }}
               >
                 {i + 1}

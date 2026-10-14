@@ -1,5 +1,4 @@
 import { normalizeEmail } from "../utils/normalize";
-import { correction } from "../utils/normalize";
 const key = (email) => `aprovaif:v1:${normalizeEmail(email)}`;
 export function loadProgress(email) {
   const raw = localStorage.getItem(key(email));
@@ -28,13 +27,6 @@ export function updateExam(email, id, updater) {
 export function startExam(existing, exam, questions) {
   const now = new Date().toISOString();
   const answers = { ...existing?.answers };
-  questions.forEach((q) => {
-    if (answers[q.id] && q.alternatives)
-      answers[q.id] = {
-        ...answers[q.id],
-        correctionStatus: correction(q, answers[q.id].alternativeId),
-      };
-  });
   return {
     status: "in_progress",
     startedAt: now,

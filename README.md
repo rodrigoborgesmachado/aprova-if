@@ -68,13 +68,15 @@ Chave `aprovaif:v1:{emailNormalizado}`, com `version: 1`, email, provas, metadad
 
 Histórico disponível apenas neste navegador e dispositivo. Não há sincronização nem múltiplas tentativas por prova. Reiniciar substitui respostas, datas e finalização daquela prova. Limpar os dados do site remove o histórico.
 
-O gabarito é normalizado isoladamente em `src/utils/normalize.js`: exatamente um indicador positivo explícito (`true`, `1`, `'1'`, `'true'`, `'TRUE'`, `'S'` ou `'s'`) é necessário. Vazio, nenhum positivo ou múltiplos positivos produzem `unknown`. As convenções devem ser revisadas quando a fonte publicar o contrato de gabarito. Questões desconhecidas não contam como erros e não entram no denominador da taxa. Sem questões corrigíveis, a taxa aparece como “—”. Ao reabrir uma prova, a correção é recalculada conforme os dados recebidos.
+A correção usa `GET /GetResposta?codigoResposta={codigo}` a cada seleção de alternativa, inclusive ao clicar novamente na alternativa já selecionada. Somente o booleano `correta` dessa resposta determina `correct` ou `incorrect`; não dependemos do campo `certa` de `/GetQuestoes`. O feedback aparece imediatamente durante a resolução. Falhas e respostas inválidas mantêm `unknown`, mostram erro e permitem tentar novamente; não contam como erros e não entram na taxa de acerto. Sem correções confirmadas, a taxa aparece como “—”.
+
+`src/hooks/useAnswerVerification.js` salva a seleção antes da consulta, cancela a consulta anterior da mesma questão e ignora resultados antigos. Consultas de outras questões podem terminar durante a navegação interna. Sair ou reiniciar cancela as consultas pendentes. O histórico salva a origem `GetResposta` e a data de correção; reabrir a prova preserva os resultados confirmados. Respostas antigas sem correção podem ser verificadas com o botão “Verificar resposta”, inclusive em revisão. Um resultado `correta: false` não revela qual das outras alternativas é correta.
 
 Progresso geral e pendências abrangem provas iniciadas. Prova finalizada com pendências pode ter conclusão abaixo de 100%. A evolução usa a data da última resposta de cada questão, sem fabricar eventos anteriores.
 
 ## Integrações e limitações
 
-Endpoints: `GET /provas-pagged`, `GET /GetQuestoes`, `POST /subscription/status`. A API real retornou 10 provas, questões sem gabarito na prova 137 e anexos `{ link, anexo }` na prova 167. O CORS da listagem permitiu `*` na requisição com origem local. Isso não garante disponibilidade permanente ou o comportamento de todos os endpoints em todas as hospedagens.
+Endpoints: `GET /provas-pagged`, `GET /GetQuestoes`, `GET /GetResposta`, `POST /subscription/status`. A API real retornou 10 provas, questões com `certa` vazio na prova 137 e anexos `{ link, anexo }` na prova 167. A correção é consultada separadamente pelo código da alternativa. O CORS da listagem permitiu `*` na requisição com origem local. Isso não garante disponibilidade permanente ou o comportamento de todos os endpoints em todas as hospedagens.
 
 Se houver bloqueio de CORS, solicite liberação da origem do frontend na API correspondente. Não há proxy de produção nem contorno inseguro. A API de assinatura não pôde ser consultada sem host/códigos válidos; pagamento e ativação ponta a ponta dependem desses dados e do Ecommerce. Retorno automático não está documentado. Erros do checkout externo (incluindo 409) são controlados pelo Ecommerce e não podem ser interceptados após a navegação.
 

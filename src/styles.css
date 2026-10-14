@@ -1172,6 +1172,10 @@ footer {
   border-color: #65ab61;
   background: #4aab4520;
 }
+.alternative.incorrect {
+  border-color: #c56752;
+  background: #c5675215;
+}
 .alternative-letter {
   display: flex;
   align-items: center;
