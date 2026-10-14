@@ -30,7 +30,7 @@ export const config = {
   questionsUrl:
     "https://apisunsale.azurewebsites.net/api/PublicQuestoes",
   ecommerceUrl:
-    "https://dev-ecommerceweb.santillanaeducacao.com.br",
-  subscriptionUrl: "https://dev-ecommerceweb.santillanaeducacao.com.br",
+    "https://dev-new-ecommerce-api.santillanaeducacao.com.br",
+  subscriptionUrl: "https://dev-new-ecommerce-api.santillanaeducacao.com.br",
   verificationTTL: 5 * 60 * 1000,
 };
