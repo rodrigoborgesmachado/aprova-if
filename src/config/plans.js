@@ -3,25 +3,25 @@ export const subscriptionPlans = [
     id: "monthly",
     name: "Mensal",
     durationMonths: 1,
-    pin: "V53ZTP",
-    offerCode: import.meta.env.VITE_MONTHLY_OFFER_CODE || "V53ZTP",
+    pin: "W42X9W",
+    offerCode: import.meta.env.VITE_MONTHLY_OFFER_CODE || "W42X9W",
     price: 100.00,
   },
   {
     id: "semiannual",
     name: "Semestral",
     durationMonths: 6,
-    pin: "QVNMO9",
+    pin: "F9JI2G",
     offerCode:
-      import.meta.env.VITE_SEMIANNUAL_OFFER_CODE || "QVNMO9",
+      import.meta.env.VITE_SEMIANNUAL_OFFER_CODE || "F9JI2G",
     price: 500.00,
   },
   {
     id: "annual",
     name: "Anual",
     durationMonths: 12,
-    pin: "G4LZK6",
-    offerCode: import.meta.env.VITE_ANNUAL_OFFER_CODE || "G4LZK6",
+    pin: "53XC54",
+    offerCode: import.meta.env.VITE_ANNUAL_OFFER_CODE || "53XC54",
     price: 1000.00,
   },
 ];
@@ -30,7 +30,7 @@ export const config = {
   questionsUrl:
     "https://apisunsale.azurewebsites.net/api/PublicQuestoes",
   ecommerceUrl:
-    "https://dev-ecommerceweb.santillanaeducacao.com.br",
-  subscriptionUrl: "https://dev-new-ecommerce-api.santillanaeducacao.com.br",
+    "https://pedidoweb-pre.santillanaeducacao.com.br/",
+  subscriptionUrl: "https://pre-new-ecommerce-api.santillanaeducacao.com.br",
   verificationTTL: 5 * 60 * 1000,
 };
